@@ -10,9 +10,10 @@ from forms import CreatePostForm, RegisterUserForm, LoginUserForm, CommentForm
 from flask_gravatar import Gravatar
 from sqlalchemy import exc
 from functools import wraps
+import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get("Secret_Key")
 ckeditor = CKEditor(app)
 Bootstrap(app)
 
@@ -78,7 +79,7 @@ class Comment(db.Model):
 
 db.create_all()
 
-
+# create custom decorator
 def admin_only(function):
     @wraps(function)
     def wrapper_function(*args, **kwargs):
@@ -195,6 +196,7 @@ def show_post(post_id):
             comment_author=current_user,
             parent_post=requested_post
         )
+
         db.session.add(new_comment)
         db.session.commit()
 
@@ -227,7 +229,9 @@ def add_new_post():
 
 @app.route("/edit-post/<int:post_id>")
 def edit_post(post_id):
+
     post = BlogPost.query.get(post_id)
+
     edit_form = CreatePostForm(
         title=post.title,
         subtitle=post.subtitle,
@@ -235,6 +239,7 @@ def edit_post(post_id):
         author=post.author,
         body=post.body
     )
+
     if edit_form.validate_on_submit():
         post.title = edit_form.title.data
         post.subtitle = edit_form.subtitle.data
@@ -250,9 +255,11 @@ def edit_post(post_id):
 
 @app.route("/delete/<int:post_id>")
 def delete_post(post_id):
+
     post_to_delete = BlogPost.query.get(post_id)
     db.session.delete(post_to_delete)
     db.session.commit()
+
     return redirect(url_for('get_all_posts'))
 
 
